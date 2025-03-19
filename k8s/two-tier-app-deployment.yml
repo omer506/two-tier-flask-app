@@ -1,12 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: two-tier-app-deployment
+  name: two-tier-app
   labels:
     app: two-tier-app
-
 spec:
-  replicas: 4
+  replicas: 2
   selector:
     matchLabels:
       app: two-tier-app
@@ -15,8 +14,12 @@ spec:
       labels:
         app: two-tier-app
     spec:
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox
+          command: ['sh', '-c', 'until nc -z mysql 3306; do sleep 5; done']
       containers:
-        - name: two-tier-app-ctr
+        - name: flask-app-ctr
           image: omernasim/flaskapp:latest
           env:
             - name: MYSQL_HOST
@@ -27,7 +30,6 @@ spec:
               value: "admin"
             - name: MYSQL_DB
               value: "mydb"
-
           ports:
             - containerPort: 5000
           imagePullPolicy: Always
